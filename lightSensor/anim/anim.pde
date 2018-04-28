@@ -12,9 +12,9 @@ int MoviePlaying;
 void setup()
 {
   //fullScreen();
-  size(600, 500);
-  myMovie1 = new Movie(this, "anxious.mov");
-  myMovie2 = new Movie(this, "sad_face.mov"); 
+  size(600, 480);
+  myMovie1 = new Movie(this, "chaos_small.mp4");
+  myMovie2 = new Movie(this, "calm_small.mov"); 
   // Open port
   String portName = Serial.list()[3]; 
   myPort = new Serial(this, portName, 9600);
