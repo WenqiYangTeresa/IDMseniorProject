@@ -7,8 +7,8 @@ unsigned long current_calibrate;
 unsigned long elapsed_calibrate;
 
 //Input & Output
-const int sensorPin = A0;
-const int sensorPinB = A1;
+const int sensorPin = A4;
+const int sensorPinB = A0;
 const int ledPin = 9;
 int sensorValue = 0;
 int sensorMin = 1023;
@@ -42,7 +42,7 @@ void setup() {
   analogWrite(ledPin, 255);
   while (millis() < 5000) {
     sensorValue = analogRead(sensorPin);
-    //sensorValueB = analogRead(sensorPinB);
+    sensorValueB = analogRead(sensorPinB);
 
     // record the maximum sensor value
     if (sensorValue > sensorMax) {
@@ -54,28 +54,32 @@ void setup() {
       sensorMin = sensorValue;
     }
 
-//    // record the maximum sensor value
-//    if (sensorValueB > sensorMaxB) {
-//      sensorMaxB = sensorValueB;
-//    }
-//
-//    // record the minimum sensor value
-//    if (sensorValueB < sensorMinB) {
-//      sensorMinB = sensorValueB;
-//    }
+    // record the maximum sensor value
+    if (sensorValueB > sensorMaxB) {
+      sensorMaxB = sensorValueB;
+    }
+
+    // record the minimum sensor value
+    if (sensorValueB < sensorMinB) {
+      sensorMinB = sensorValueB;
+    }
   }
   analogWrite(ledPin, 0);
   // put your setup code here, to run once:
   Serial.begin(9600);
-  //  Serial.print("sensorMin:");
-  //  Serial.println(sensorMin);
-  //  Serial.print("sensorMax:");
-  //  Serial.println(sensorMax);
+//  Serial.print("sensorMin:");
+//  Serial.println(sensorMin);
+//  Serial.print("sensorMax:");
+//  Serial.println(sensorMax);
+//  Serial.print("sensorMinB:");
+//  Serial.println(sensorMinB);
+//  Serial.print("sensorMaxB:");
+//  Serial.println(sensorMaxB);
   for (int thisReading = 0; thisReading < numReadings; thisReading++) {
     list[thisReading] = 0;
-   // listB[thisReading] = 0;   
+    listB[thisReading] = 0;
   }
-  establishContact();
+  //establishContact();
 }
 
 void loop() {
@@ -93,44 +97,45 @@ void loop() {
       list[thisReading] = analogRead(sensorPin);
       list[thisReading] = map(list[thisReading], sensorMin, sensorMax, 0, 255);
       list[thisReading] = constrain(list[thisReading], 0, 255);
-      //listB[thisReading] = analogRead(sensorPinB);
-      //listB[thisReading] = map(listB[thisReading], sensorMinB, sensorMaxB, 0, 255);
-      //listB[thisReading] = constrain(listB[thisReading], 0, 255);
+      listB[thisReading] = analogRead(sensorPinB);
+      listB[thisReading] = map(listB[thisReading], sensorMinB, sensorMaxB, 0, 255);
+      listB[thisReading] = constrain(listB[thisReading], 0, 255);
       // Update Total
       // add the reading to the total:
       total = total + list[thisReading];
-      //totalB = totalB + listB[thisReading];
+      totalB = totalB + listB[thisReading];
       delay(5);
     }
-
+//    Serial.print("ArrayA: [");
+//    for (byte j = 0; j < numReadings; j++) {
+//      Serial.print(list[j], DEC);
+//      Serial.print (", ");
+//    }
+//    Serial.print("]\r\n");
+//    Serial.print("ArrayB: [");
+//    for (byte j = 0; j < numReadings; j++) {
+//      Serial.print(listB[j], DEC);
+//      Serial.print (", ");
+//    }
+//    Serial.print("]\r\n");
     //average of all values
     regAverage = total / numReadings;
     New_regAverage = regAverage;
-    //regAverageB = totalB / numReadings;
-    //New_regAverageB = regAverageB;
-    
-    //    sensorValue = analogRead(sensorPin);
-    //    sensorValue = map(sensorValue, sensorMin, sensorMax, 0, 255);
-    //    sensorValue = constrain(sensorValue, 0, 255);
-    //Serial.println(sensorValue);
-    if (New_regAverage > threshold) {
-      if (Old_regAverage <= threshold) {
-        analogWrite(ledPin, 255);
-        CHAOS = false;
-      }
-    } else if (New_regAverage <= threshold) {
-      if (Old_regAverage > threshold) {
-        analogWrite(ledPin, 0);
-        CHAOS = true;
-      }
+    regAverageB = totalB / numReadings;
+    New_regAverageB = regAverageB;
+//    Serial.print("New_regAverage:  ");
+//    Serial.println(New_regAverage);
+//    Serial.print("New_regAverageB:  ");
+//    Serial.println(New_regAverageB);
+
+
+    if (( New_regAverage > threshold && Old_regAverage <= threshold) || (New_regAverageB > threshold && Old_regAverageB <= threshold)) {
+      analogWrite(ledPin, 255);
+      CHAOS = false;
+    } else if (( New_regAverage < threshold && Old_regAverage >= threshold) || (New_regAverageB < threshold && Old_regAverageB >= threshold)) {
+      analogWrite(ledPin, 0);
+      CHAOS = true;
     }
-//    if (( New_regAverage > threshold && Old_regAverage <= threshold) || (New_regAverageB > threshold && Old_regAverageB <= threshold)) {     
-//        analogWrite(ledPin, 255);
-//        CHAOS = false;
-//    } else if (( New_regAverage < threshold && Old_regAverage >= threshold) || (New_regAverageB < threshold && Old_regAverageB >= threshold)) {      
-//        analogWrite(ledPin, 0);
-//        CHAOS = true;
-//    }
     if (CHAOS == true) {
       Serial.println("Y"); //play yellow video; chaotic Mov2
     } else {
@@ -138,17 +143,20 @@ void loop() {
     }
     total = 0;
     Old_regAverage = New_regAverage;
-    //totalB=0;
-    //Old_regAverageB = New_regAverageB;
+    totalB = 0;
+    Old_regAverageB = New_regAverageB;
     delay(5);
   }
   while (elapsed_time < 1200000);
+
 
 
   //Recalibrate every 20min
   if (elapsed_time = 1200000) {
     sensorMin = 1023;
     sensorMax = 0;
+    sensorMinB = 1023;
+    sensorMaxB = 0;
     // Serial.println("recalibrate");
     start_calibrate = millis();
     do {
@@ -167,12 +175,27 @@ void loop() {
         sensorMin = sensorValue;
       }
 
+      sensorValueB = analogRead(sensorPinB);
+
+      // record the maximum sensor value
+      if (sensorValueB > sensorMaxB) {
+        sensorMaxB = sensorValueB;
+      }
+
+      // record the minimum sensor value
+      if (sensorValueB < sensorMinB) {
+        sensorMinB = sensorValueB;
+      }
     }
     while (elapsed_calibrate < 5000);
-    //    Serial.print("sensorMin:");
-    //    Serial.println(sensorMin);
-    //    Serial.print("sensorMax:");
-    //    Serial.println(sensorMax);
+//    Serial.print("sensorMin:");
+//    Serial.println(sensorMin);
+//    Serial.print("sensorMax:");
+//    Serial.println(sensorMax);
+//    Serial.print("sensorMinB:");
+//    Serial.println(sensorMinB);
+//    Serial.print("sensorMaxB:");
+//    Serial.println(sensorMaxB);
   }
 
 

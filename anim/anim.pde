@@ -11,8 +11,8 @@ int MoviePlaying;
 
 void setup()
 {
-  //fullScreen();
-  size(600, 480);
+  fullScreen();
+  //size(600, 480);
   myMovie1 = new Movie(this, "chaos_small.mp4");
   myMovie2 = new Movie(this, "calm_small.mov"); 
   // Open port
